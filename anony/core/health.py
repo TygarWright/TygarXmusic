@@ -4,14 +4,42 @@ import asyncio
 from contextlib import suppress
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 import uvicorn
+from pathlib import Path
 
 from anony import config, db, logger
 
 app = FastAPI(title="TygarXmusic health", docs_url=None, redoc_url=None)
 _started = False
 _server_task: asyncio.Task | None = None
+
+
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse(Path("dashboard/index.html"))
+
+
+@app.get("/dashboard/{asset:path}")
+async def dashboard_asset(asset: str):
+    path = Path("dashboard") / asset
+    if not path.is_file() or ".." in path.parts:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    return FileResponse(path)
+
+
+@app.get("/metrics")
+async def metrics():
+    from anony import boot, db
+
+    uptime = int(asyncio.get_running_loop().time() - boot)
+    return {
+        "uptime": f"{uptime // 3600}h {(uptime % 3600) // 60}m",
+        "active_calls": len(db.active_calls),
+        "known_chats": len(db.chats),
+        "known_users": len(db.users),
+        "queue_items": sum(len(q) for q in __import__("anony").queue.queues.values()),
+    }
 
 
 @app.get("/healthz")

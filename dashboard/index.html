@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TygarXmusic Control Room</title>
+  <link rel="stylesheet" href="/dashboard/style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">TYGARX / CONTROL ROOM</p>
+        <h1>Music operations, without the guesswork.</h1>
+      </div>
+      <span id="overall" class="badge pending">Checking</span>
+    </header>
+
+    <section class="metrics" aria-label="Service status">
+      <article class="card metric"><span>Health</span><strong id="health">—</strong><small id="health-detail">Waiting for probe</small></article>
+      <article class="card metric"><span>Readiness</span><strong id="ready">—</strong><small id="ready-detail">Waiting for probe</small></article>
+      <article class="card metric"><span>Uptime</span><strong id="uptime">—</strong><small>Process lifetime</small></article>
+      <article class="card metric"><span>Active calls</span><strong id="calls">—</strong><small>Live voice chats</small></article>
+    </section>
+
+    <section class="grid">
+      <article class="card panel wide">
+        <div class="panel-head"><div><p class="eyebrow">LIVE QUEUE</p><h2>Now playing</h2></div><button id="refresh" class="button">Refresh</button></div>
+        <div id="now-playing" class="now-playing empty">No live playback data yet.</div>
+        <div id="queue" class="queue"></div>
+      </article>
+      <article class="card panel">
+        <p class="eyebrow">RUNTIME</p><h2>System signals</h2>
+        <div id="signals" class="signals"></div>
+      </article>
+      <article class="card panel">
+        <p class="eyebrow">OPERATIONS</p><h2>Quick actions</h2>
+        <div class="actions">
+          <button class="action" data-path="/healthz">Probe health</button>
+          <button class="action" data-path="/readyz">Probe readiness</button>
+          <a class="action" href="https://github.com/TygarWright/TygarXmusic/actions" target="_blank" rel="noreferrer">Open Actions</a>
+          <a class="action" href="https://github.com/TygarWright/TygarXmusic/security/dependabot" target="_blank" rel="noreferrer">Review Dependabot</a>
+        </div>
+      </article>
+    </section>
+    <footer><span>TygarXmusic</span><span id="updated">—</span></footer>
+  </main>
+  <script src="/dashboard/app.js" defer></script>
+</body>
+</html>
