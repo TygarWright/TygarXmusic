@@ -3,8 +3,8 @@
 # This file is part of TygarXmusic
 
 
-import time
 import asyncio
+import time
 
 from pyrogram import enums, errors, filters, types
 
@@ -23,10 +23,15 @@ async def auto_leave():
         await asyncio.sleep(3600)
         for ub in userbot.clients:
             try:
-                chats = [dialog.chat.id async for dialog in ub.get_dialogs()
-                            if dialog.chat.type in [
-                                enums.ChatType.GROUP, enums.ChatType.SUPERGROUP,
-                            ]][-20:]
+                chats = [
+                    dialog.chat.id
+                    async for dialog in ub.get_dialogs()
+                    if dialog.chat.type
+                    in [
+                        enums.ChatType.GROUP,
+                        enums.ChatType.SUPERGROUP,
+                    ]
+                ][-20:]
                 for chat in chats:
                     if chat in [app.logger]:
                         continue

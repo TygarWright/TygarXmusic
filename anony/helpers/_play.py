@@ -31,11 +31,19 @@ def checkUB(play):
                 await app.get_chat_member(panel["fsub_id"], m.from_user.id)
             except errors.UserNotParticipant:
                 ch = panel.get("fsub_username")
-                markup = types.InlineKeyboardMarkup([[
-                    types.InlineKeyboardButton(
-                        "🔔 Join Channel", url=f"https://t.me/{ch}"
+                markup = (
+                    types.InlineKeyboardMarkup(
+                        [
+                            [
+                                types.InlineKeyboardButton(
+                                    "🔔 Join Channel", url=f"https://t.me/{ch}"
+                                )
+                            ]
+                        ]
                     )
-                ]]) if ch else None
+                    if ch
+                    else None
+                )
                 return await m.reply_text(
                     "<b>🔒 Join Required</b>\n\nYou must join our channel to use this bot.",
                     reply_markup=markup,
@@ -63,7 +71,9 @@ def checkUB(play):
         video = m.command[0][0] == "v" and panel.get("video_play", config.VIDEO_PLAY)
         url = utils.get_url(m)
         if url and yt.invalid(url):
-            return await m.reply_text(m.lang["play_not_found"].format(config.SUPPORT_CHAT))
+            return await m.reply_text(
+                m.lang["play_not_found"].format(config.SUPPORT_CHAT)
+            )
         m3u8 = url and not yt.valid(url)
 
         play_mode = await db.get_play_mode(chat_id)
@@ -85,9 +95,7 @@ def checkUB(play):
                     enums.ChatMemberStatus.RESTRICTED,
                 ]:
                     try:
-                        await app.unban_chat_member(
-                            chat_id=chat_id, user_id=client.id
-                        )
+                        await app.unban_chat_member(chat_id=chat_id, user_id=client.id)
                     except Exception:
                         return await m.reply_text(
                             m.lang["play_banned"].format(
@@ -99,7 +107,10 @@ def checkUB(play):
                         )
             except errors.ChatAdminRequired:
                 return await m.reply_text(m.lang["admin_required"])
-            except (errors.UserNotParticipant, errors.exceptions.bad_request_400.UserNotParticipant):
+            except (
+                errors.UserNotParticipant,
+                errors.exceptions.bad_request_400.UserNotParticipant,
+            ):
                 if m.chat.username:
                     invite_link = m.chat.username
                     try:

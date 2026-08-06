@@ -7,8 +7,8 @@ from pyrogram import filters, types
 
 from anony import app, db
 
-
 # ─────────────────────────── helpers ────────────────────────────
+
 
 def _e(v: bool) -> str:
     return "✅ ON" if v else "❌ OFF"
@@ -38,35 +38,53 @@ def _panel_markup(p: dict) -> types.InlineKeyboardMarkup:
     dur = p["duration_limit"]
     que = p["queue_limit"]
 
-    return types.InlineKeyboardMarkup([
-        # Force subscribe toggle
-        [ikb(f"🔒 Force Subscribe: {_e(p['fsub'])}", callback_data="panel_tog fsub")],
-        # Maintenance toggle
-        [ikb(f"🔧 Maintenance: {_e(p['maintenance'])}", callback_data="panel_tog maintenance")],
-        # Duration limit with +/- controls (step: 15 min)
+    return types.InlineKeyboardMarkup(
         [
-            ikb("⏱ Duration", callback_data="panel_noop"),
-            ikb("➖", callback_data="panel_dur -"),
-            ikb(f"{dur} min", callback_data="panel_noop"),
-            ikb("➕", callback_data="panel_dur +"),
-        ],
-        # Queue limit with +/- controls (step: 5 tracks)
-        [
-            ikb("📋 Queue", callback_data="panel_noop"),
-            ikb("➖", callback_data="panel_que -"),
-            ikb(f"{que} tracks", callback_data="panel_noop"),
-            ikb("➕", callback_data="panel_que +"),
-        ],
-        # Thumbnails and video toggles on one row
-        [
-            ikb(f"🖼 Thumbnails: {_e(p['thumb_gen'])}", callback_data="panel_tog thumb"),
-            ikb(f"📹 Video: {_e(p['video_play'])}", callback_data="panel_tog video"),
-        ],
-        [ikb("✖ Close", callback_data="panel_close")],
-    ])
+            # Force subscribe toggle
+            [
+                ikb(
+                    f"🔒 Force Subscribe: {_e(p['fsub'])}",
+                    callback_data="panel_tog fsub",
+                )
+            ],
+            # Maintenance toggle
+            [
+                ikb(
+                    f"🔧 Maintenance: {_e(p['maintenance'])}",
+                    callback_data="panel_tog maintenance",
+                )
+            ],
+            # Duration limit with +/- controls (step: 15 min)
+            [
+                ikb("⏱ Duration", callback_data="panel_noop"),
+                ikb("➖", callback_data="panel_dur -"),
+                ikb(f"{dur} min", callback_data="panel_noop"),
+                ikb("➕", callback_data="panel_dur +"),
+            ],
+            # Queue limit with +/- controls (step: 5 tracks)
+            [
+                ikb("📋 Queue", callback_data="panel_noop"),
+                ikb("➖", callback_data="panel_que -"),
+                ikb(f"{que} tracks", callback_data="panel_noop"),
+                ikb("➕", callback_data="panel_que +"),
+            ],
+            # Thumbnails and video toggles on one row
+            [
+                ikb(
+                    f"🖼 Thumbnails: {_e(p['thumb_gen'])}",
+                    callback_data="panel_tog thumb",
+                ),
+                ikb(
+                    f"📹 Video: {_e(p['video_play'])}", callback_data="panel_tog video"
+                ),
+            ],
+            [ikb("✖ Close", callback_data="panel_close")],
+        ]
+    )
 
 
 # ─────────────────────────── commands ───────────────────────────
+
 
 @app.on_message(filters.command(["panel", "adminpanel"]) & app.sudoers)
 async def _panel(_, m: types.Message):
@@ -102,6 +120,7 @@ async def _setfsub(_, m: types.Message):
 
 
 # ─────────────────────────── callbacks ──────────────────────────
+
 
 @app.on_callback_query(filters.regex(r"^panel") & app.sudoers)
 async def _panel_cb(_, query: types.CallbackQuery):

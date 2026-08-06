@@ -3,10 +3,10 @@
 # This file is part of TygarXmusic
 
 
-import os
 import ast
+import os
 import traceback
-from typing import Optional
+
 
 async def meval(code: str, globs: dict, **kwargs):
     """
@@ -21,35 +21,61 @@ async def meval(code: str, globs: dict, **kwargs):
     while _global_arg in globs:
         _global_arg = "_" + _global_arg
 
-    kwargs[_global_arg] = {k: globs[k] for k in ("__name__", "__package__") if k in globs}
+    kwargs[_global_arg] = {
+        k: globs[k] for k in ("__name__", "__package__") if k in globs
+    }
 
     root = ast.parse(code, mode="exec")
     if not root.body:
         return None
 
     ret_name = "_ret"
-    while any(isinstance(n, ast.Name) and n.id == ret_name for n in ast.walk(root)) or ret_name in globs:
+    while (
+        any(isinstance(n, ast.Name) and n.id == ret_name for n in ast.walk(root))
+        or ret_name in globs
+    ):
         ret_name = "_" + ret_name
 
     body = []
-    body.append(ast.Expr(ast.Call(
-        func=ast.Attribute(
-            value=ast.Call(func=ast.Name(id="globals", ctx=ast.Load()), args=[], keywords=[]),
-            attr="update", ctx=ast.Load()
-        ),
-        args=[], keywords=[ast.keyword(arg=None, value=ast.Name(id=_global_arg, ctx=ast.Load()))]
-    )))
-    body.append(ast.Assign(
-        targets=[ast.Name(id=ret_name, ctx=ast.Store())],
-        value=ast.List(elts=[], ctx=ast.Load())
-    ))
+    body.append(
+        ast.Expr(
+            ast.Call(
+                func=ast.Attribute(
+                    value=ast.Call(
+                        func=ast.Name(id="globals", ctx=ast.Load()),
+                        args=[],
+                        keywords=[],
+                    ),
+                    attr="update",
+                    ctx=ast.Load(),
+                ),
+                args=[],
+                keywords=[
+                    ast.keyword(
+                        arg=None, value=ast.Name(id=_global_arg, ctx=ast.Load())
+                    )
+                ],
+            )
+        )
+    )
+    body.append(
+        ast.Assign(
+            targets=[ast.Name(id=ret_name, ctx=ast.Store())],
+            value=ast.List(elts=[], ctx=ast.Load()),
+        )
+    )
 
     for node in root.body:
         if isinstance(node, ast.Expr):
             new_node = ast.Expr(
                 value=ast.Call(
-                    func=ast.Attribute(value=ast.Name(id=ret_name, ctx=ast.Load()), attr="append", ctx=ast.Load()),
-                    args=[node.value], keywords=[]
+                    func=ast.Attribute(
+                        value=ast.Name(id=ret_name, ctx=ast.Load()),
+                        attr="append",
+                        ctx=ast.Load(),
+                    ),
+                    args=[node.value],
+                    keywords=[],
                 )
             )
             ast.copy_location(new_node, node)
@@ -61,12 +87,16 @@ async def meval(code: str, globs: dict, **kwargs):
     func_def = ast.AsyncFunctionDef(
         name="tmp",
         args=ast.arguments(
-            posonlyargs=[], args=[], vararg=None,
-            kwonlyargs=[ast.arg(arg=k) for k in kwargs.keys()],
+            posonlyargs=[],
+            args=[],
+            vararg=None,
+            kwonlyargs=[ast.arg(arg=k) for k in kwargs],
             kw_defaults=[None] * len(kwargs),
-            kwarg=None, defaults=[]
+            kwarg=None,
+            defaults=[],
         ),
-        body=body, decorator_list=[]
+        body=body,
+        decorator_list=[],
     )
     ast.fix_missing_locations(func_def)
 
@@ -83,7 +113,9 @@ async def meval(code: str, globs: dict, **kwargs):
     return result[0] if len(result) == 1 else (result or None)
 
 
-def format_exception(exc: BaseException, tb: Optional[list[traceback.FrameSummary]] = None) -> str:
+def format_exception(
+    exc: BaseException, tb: list[traceback.FrameSummary] | None = None
+) -> str:
     """Format exception traceback into a readable string."""
     if tb is None:
         tb = traceback.extract_tb(exc.__traceback__)

@@ -3,14 +3,14 @@
 # This file is part of TygarXmusic
 
 
-import os
-import re
-import yt_dlp
-import random
 import asyncio
-import aiohttp
+import os
+import random
+import re
 from pathlib import Path
 
+import aiohttp
+import yt_dlp
 from py_yt import Playlist, VideosSearch
 
 from anony import logger
@@ -88,7 +88,9 @@ class YouTube:
             )
         return None
 
-    async def playlist(self, limit: int, user: str, url: str, video: bool) -> list[Track | None]:
+    async def playlist(
+        self, limit: int, user: str, url: str, video: bool
+    ) -> list[Track | None]:
         tracks = []
         try:
             plist = await Playlist.get(url)

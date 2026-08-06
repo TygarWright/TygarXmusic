@@ -20,6 +20,7 @@ def playlist_to_queue(chat_id: int, tracks: list) -> str:
     text = text[:1948] + "</blockquote>"
     return text
 
+
 @app.on_message(
     filters.command(["play", "playforce", "vplay", "vplayforce"])
     & filters.group
@@ -42,7 +43,7 @@ async def play_hndlr(
     tracks = []
 
     if media:
-        setattr(sent, "lang", m.lang)
+        sent.lang = m.lang
         file = await tg.download(m.reply_to_message, sent)
 
     elif m3u8:
@@ -51,9 +52,7 @@ async def play_hndlr(
     elif url:
         if "playlist" in url:
             await sent.edit_text(m.lang["playlist_fetch"])
-            tracks = await yt.playlist(
-                config.PLAYLIST_LIMIT, mention, url, video
-            )
+            tracks = await yt.playlist(config.PLAYLIST_LIMIT, mention, url, video)
 
             if not tracks:
                 return await sent.edit_text(m.lang["playlist_error"])

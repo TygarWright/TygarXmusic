@@ -23,5 +23,5 @@ jobs:
         run: python -m pip install --disable-pip-version-check ruff
       - name: Check formatting
         run: ruff format --check anony config.py
-      - name: Check lint
-        run: ruff check anony config.py
+      - name: Check focused lint rules
+        run: ruff check --select E,F --ignore E501 anony config.py

@@ -37,8 +37,7 @@ async def _seek(_, m: types.Message):
     if m.command[0] == "seekback":
         stype = m.lang["backward"]
         start_from = media.time - to_seek
-        if start_from < 1:
-            start_from = 1
+        start_from = max(start_from, 1)
     else:
         stype = m.lang["forward"]
         start_from = media.time + to_seek

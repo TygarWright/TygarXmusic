@@ -15,7 +15,7 @@ class Inline:
         self.ikb = types.InlineKeyboardButton
 
     def cancel_dl(self, text) -> types.InlineKeyboardMarkup:
-        return self.ikm([[self.ikb(text=text, callback_data=f"cancel_dl")]])
+        return self.ikm([[self.ikb(text=text, callback_data="cancel_dl")]])
 
     def controls(
         self,
@@ -57,7 +57,17 @@ class Inline:
                 ]
             ]
         else:
-            cbs = ["admins", "auth", "blist", "lang", "ping", "play", "queue", "stats", "sudo"]
+            cbs = [
+                "admins",
+                "auth",
+                "blist",
+                "lang",
+                "ping",
+                "play",
+                "queue",
+                "stats",
+                "sudo",
+            ]
             buttons = [
                 self.ikb(text=_lang[f"help_{i}"], callback_data=f"help {cb}")
                 for i, cb in enumerate(cbs)
@@ -104,7 +114,12 @@ class Inline:
         )
 
     def settings_markup(
-        self, lang: dict, admin_only: bool, cmd_delete: bool, language: str, chat_id: int
+        self,
+        lang: dict,
+        admin_only: bool,
+        cmd_delete: bool,
+        language: str,
+        chat_id: int,
     ) -> types.InlineKeyboardMarkup:
         return self.ikm(
             [
