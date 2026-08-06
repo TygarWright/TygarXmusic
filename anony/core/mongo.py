@@ -286,6 +286,9 @@ class MongoDB:
     async def clear_saved_queue(self, chat_id: int) -> None:
         await self.queuedb.delete_one({"_id": chat_id})
 
+    async def persist_queue(self, chat_id: int, queue) -> None:
+        await self.save_queue(chat_id, queue.snapshot(chat_id))
+
     # LOGGER METHODS
     async def is_logger(self) -> bool:
         return self.logger

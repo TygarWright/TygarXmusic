@@ -23,7 +23,12 @@ async def cancel_dl(_, query: types.CallbackQuery):
 @can_manage_vc
 async def _controls(_, query: types.CallbackQuery):
     args = query.data.split()
-    action, chat_id = args[1], int(args[2])
+    if len(args) < 3:
+        return await query.answer("Invalid control request", show_alert=True)
+    try:
+        action, chat_id = args[1], int(args[2])
+    except (IndexError, ValueError):
+        return await query.answer("Invalid control request", show_alert=True)
     qaction = len(args) == 4
     user = query.from_user.mention
 
@@ -66,6 +71,7 @@ async def _controls(_, query: types.CallbackQuery):
 
     elif action == "skip":
         await anon.play_next(chat_id)
+        await db.persist_queue(chat_id, queue)
         status = query.lang["skipped"]
         reply = query.lang["play_skipped"].format(user)
 
@@ -76,6 +82,7 @@ async def _controls(_, query: types.CallbackQuery):
 
         m_id = queue.get_current(chat_id).message_id
         queue.force_add(chat_id, media, remove=pos)
+        await db.persist_queue(chat_id, queue)
         try:
             await app.delete_messages(
                 chat_id=chat_id, message_ids=[m_id, media.message_id], revoke=True
@@ -176,3 +183,19 @@ async def _settings_cb(_, query: types.CallbackQuery):
             chat_id,
         )
     )
+
+
+@app.on_callback_query(filters.regex(r"^queue_refresh") & ~app.bl_users)
+@lang.language()
+@can_manage_vc
+async def queue_refresh(_, query: types.CallbackQuery):
+    args = query.data.split()
+    if len(args) != 2:
+        return await query.answer("Invalid queue request", show_alert=True)
+    try:
+        chat_id = int(args[1])
+    except ValueError:
+        return await query.answer("Invalid queue request", show_alert=True)
+    if chat_id != query.message.chat.id or not await db.get_call(chat_id):
+        return await query.answer(query.lang["not_playing"], show_alert=True)
+    return await query.answer("Queue is current")

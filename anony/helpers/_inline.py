@@ -110,7 +110,24 @@ class Inline:
     ) -> types.InlineKeyboardMarkup:
         _action = "pause" if playing else "resume"
         return self.ikm(
-            [[self.ikb(text=_text, callback_data=f"controls {_action} {chat_id} q")]]
+            [
+                [
+                    self.ikb(
+                        text=_text,
+                        callback_data=f"controls {_action} {chat_id} q",
+                    ),
+                    self.ikb(
+                        text="⏭",
+                        callback_data=f"controls skip {chat_id} q",
+                    ),
+                ],
+                [
+                    self.ikb(
+                        text="🔄 Refresh",
+                        callback_data=f"queue_refresh {chat_id}",
+                    )
+                ],
+            ]
         )
 
     def settings_markup(

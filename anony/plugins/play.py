@@ -22,7 +22,7 @@ def playlist_to_queue(chat_id: int, tracks: list) -> str:
 
 
 @app.on_message(
-    filters.command(["play", "playforce", "vplay", "vplayforce"])
+    filters.command(["play", "playforce", "vplay", "vplayforce", "radio"])
     & filters.group
     & ~app.bl_users
 )
@@ -37,6 +37,8 @@ async def play_hndlr(
     url: str = None,
 ) -> None:
     sent = await m.reply_text(m.lang["play_searching"])
+    if m.command[0] == "radio" and len(m.command) > 1:
+        m3u8 = True
     file = None
     mention = m.from_user.mention
     media = tg.get_media(m.reply_to_message) if m.reply_to_message else None
@@ -47,6 +49,8 @@ async def play_hndlr(
         file = await tg.download(m.reply_to_message, sent)
 
     elif m3u8:
+        if not url or not url.startswith(("http://", "https://")):
+            return await sent.edit_text(m.lang["play_usage"])
         file = await tg.process_m3u8(url, sent.id, video)
 
     elif url:
