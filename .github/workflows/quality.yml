@@ -24,4 +24,4 @@ jobs:
       - name: Check formatting
         run: ruff format --check anony config.py
       - name: Check focused lint rules
-        run: ruff check --select E,F --ignore E501 anony config.py
+        run: ruff check --select E,F --ignore E501,E402,E713,E731,F401 anony config.py

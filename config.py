@@ -46,6 +46,11 @@ class Config:
         self.PING_IMG = getenv("PING_IMG", "https://files.catbox.moe/haagg2.png")
         self.START_IMG = getenv("START_IMG", "https://files.catbox.moe/zvziwk.jpg")
 
+        self.HEALTH_HOST = getenv("HEALTH_HOST", "127.0.0.1")
+        self.HEALTH_PORT = int(getenv("HEALTH_PORT", 8080))
+        self.PLAY_RETRIES = int(getenv("PLAY_RETRIES", 3))
+        self.RATE_LIMIT_SECONDS = float(getenv("RATE_LIMIT_SECONDS", 2))
+
     def check(self):
         missing = [
             var

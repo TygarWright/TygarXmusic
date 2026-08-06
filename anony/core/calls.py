@@ -3,6 +3,8 @@
 # This file is part of TygarXmusic
 
 
+import asyncio
+
 from ntgcalls import (
     ConnectionError,
     ConnectionNotFound,
@@ -83,67 +85,84 @@ class TgCall(PyTgCalls):
             ),
             ffmpeg_parameters=f"-ss {seek_time}" if seek_time > 1 else None,
         )
-        try:
-            await client.play(
-                chat_id=chat_id,
-                stream=stream,
-                config=types.GroupCallConfig(auto_start=False),
-            )
-            if not seek_time:
-                media.time = 1
-                await db.add_call(chat_id)
-                text = _lang["play_media"].format(
-                    media.url,
-                    media.title,
-                    media.duration,
-                    media.user,
+        for attempt in range(1, config.PLAY_RETRIES + 1):
+            try:
+                await client.play(
+                    chat_id=chat_id,
+                    stream=stream,
+                    config=types.GroupCallConfig(auto_start=False),
                 )
-                keyboard = buttons.controls(chat_id)
-                try:
-                    if _thumb:
-                        await message.edit_media(
-                            media=InputMediaPhoto(
-                                media=_thumb,
+                if not seek_time:
+                    media.time = 1
+                    await db.add_call(chat_id)
+                    text = _lang["play_media"].format(
+                        media.url,
+                        media.title,
+                        media.duration,
+                        media.user,
+                    )
+                    keyboard = buttons.controls(chat_id)
+                    try:
+                        if _thumb:
+                            await message.edit_media(
+                                media=InputMediaPhoto(media=_thumb, caption=text),
+                                reply_markup=keyboard,
+                            )
+                        else:
+                            await message.edit_text(text, reply_markup=keyboard)
+                    except (
+                        ChatSendMediaForbidden,
+                        ChatSendPhotosForbidden,
+                        MessageIdInvalid,
+                    ):
+                        if _thumb:
+                            sent = await app.send_photo(
+                                chat_id=chat_id,
+                                photo=_thumb,
                                 caption=text,
-                            ),
-                            reply_markup=keyboard,
-                        )
-                    else:
-                        await message.edit_text(text, reply_markup=keyboard)
-                except (
-                    ChatSendMediaForbidden,
-                    ChatSendPhotosForbidden,
-                    MessageIdInvalid,
-                ):
-                    if _thumb:
-                        sent = await app.send_photo(
-                            chat_id=chat_id,
-                            photo=_thumb,
-                            caption=text,
-                            reply_markup=keyboard,
-                        )
-                    else:
-                        sent = await app.send_message(
-                            chat_id=chat_id,
-                            text=text,
-                            reply_markup=keyboard,
-                        )
-                    media.message_id = sent.id
-        except FileNotFoundError:
-            await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            await self.play_next(chat_id)
-        except exceptions.NoActiveGroupCall:
-            await self.stop(chat_id)
-            await message.edit_text(_lang["error_no_call"])
-        except exceptions.NoAudioSourceFound:
-            await message.edit_text(_lang["error_no_audio"])
-            await self.play_next(chat_id)
-        except (ConnectionError, ConnectionNotFound, TelegramServerError):
-            await self.stop(chat_id)
-            await message.edit_text(_lang["error_tg_server"])
-        except RTMPStreamingUnsupported:
-            await self.stop(chat_id)
-            await message.edit_text(_lang["error_rtmp"])
+                                reply_markup=keyboard,
+                            )
+                        else:
+                            sent = await app.send_message(
+                                chat_id=chat_id,
+                                text=text,
+                                reply_markup=keyboard,
+                            )
+                        media.message_id = sent.id
+                return
+            except (ConnectionError, ConnectionNotFound, TelegramServerError) as exc:
+                logger.warning(
+                    "playback_attempt_failed",
+                    extra={
+                        "chat_id": chat_id,
+                        "attempt": attempt,
+                        "error": type(exc).__name__,
+                    },
+                )
+                if attempt < config.PLAY_RETRIES:
+                    await asyncio.sleep(attempt)
+                    continue
+                await self.stop(chat_id)
+                await message.edit_text(_lang["error_tg_server"])
+                return
+            except FileNotFoundError:
+                await message.edit_text(
+                    _lang["error_no_file"].format(config.SUPPORT_CHAT)
+                )
+                await self.play_next(chat_id)
+                return
+            except exceptions.NoActiveGroupCall:
+                await self.stop(chat_id)
+                await message.edit_text(_lang["error_no_call"])
+                return
+            except exceptions.NoAudioSourceFound:
+                await message.edit_text(_lang["error_no_audio"])
+                await self.play_next(chat_id)
+                return
+            except RTMPStreamingUnsupported:
+                await self.stop(chat_id)
+                await message.edit_text(_lang["error_rtmp"])
+                return
 
     async def replay(self, chat_id: int) -> None:
         if not await db.get_call(chat_id):

@@ -9,6 +9,7 @@ import signal
 from contextlib import suppress
 
 from anony import anon, app, config, db, logger, stop, thumb, userbot, yt
+from anony.core import health
 from anony.plugins import all_modules
 
 
@@ -23,7 +24,9 @@ async def idle():
 
 
 async def main():
+    config.check()
     await db.connect()
+    await health.start()
     await app.boot()
     await userbot.boot()
     await anon.boot()
@@ -42,6 +45,7 @@ async def main():
     logger.info(f"Loaded {len(app.sudoers)} sudo users.")
 
     await idle()
+    await health.stop()
     asyncio.create_task(stop())
 
 

@@ -1,3 +1,7 @@
+from anony.core.logging import configure
+
+configure()
+
 # Copyright (c) 2025 TygarX
 # Licensed under the MIT License.
 # This file is part of TygarXmusic

@@ -43,6 +43,8 @@ class MongoDB:
 
         self.lang = {}
         self.langdb = self.db.lang
+        self.settingsdb = self.db.settings
+        self.queuedb = self.db.queues
 
         self.users = []
         self.usersdb = self.db.users
@@ -243,6 +245,46 @@ class MongoDB:
             doc = await self.langdb.find_one({"_id": chat_id})
             self.lang[chat_id] = doc["lang"] if doc else config.LANG_CODE
         return self.lang[chat_id]
+
+    # CHAT SETTINGS
+    async def get_settings(self, chat_id: int) -> dict:
+        doc = await self.settingsdb.find_one({"_id": chat_id}) or {}
+        return {
+            "queue_limit": int(doc.get("queue_limit", config.QUEUE_LIMIT)),
+            "duration_limit": int(
+                doc.get("duration_limit", config.DURATION_LIMIT // 60)
+            ),
+            "video_play": bool(doc.get("video_play", config.VIDEO_PLAY)),
+            "thumb_gen": bool(doc.get("thumb_gen", config.THUMB_GEN)),
+            "radio_mode": bool(doc.get("radio_mode", False)),
+        }
+
+    async def set_setting(self, chat_id: int, key: str, value) -> dict:
+        allowed = {
+            "queue_limit",
+            "duration_limit",
+            "video_play",
+            "thumb_gen",
+            "radio_mode",
+        }
+        if key not in allowed:
+            raise ValueError(f"Unsupported setting: {key}")
+        await self.settingsdb.update_one(
+            {"_id": chat_id}, {"$set": {key: value}}, upsert=True
+        )
+        return await self.get_settings(chat_id)
+
+    async def save_queue(self, chat_id: int, items: list[dict]) -> None:
+        await self.queuedb.update_one(
+            {"_id": chat_id}, {"$set": {"items": items}}, upsert=True
+        )
+
+    async def load_queue(self, chat_id: int) -> list[dict]:
+        doc = await self.queuedb.find_one({"_id": chat_id}) or {}
+        return doc.get("items", [])
+
+    async def clear_saved_queue(self, chat_id: int) -> None:
+        await self.queuedb.delete_one({"_id": chat_id})
 
     # LOGGER METHODS
     async def is_logger(self) -> bool:

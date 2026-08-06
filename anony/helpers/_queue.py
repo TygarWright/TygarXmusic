@@ -4,7 +4,9 @@
 
 
 from collections import defaultdict, deque
+from dataclasses import asdict
 from typing import Union
+
 
 from ._dataclass import Media, Track
 
@@ -65,6 +67,14 @@ class Queue:
         """Remove the currently playing item only (if exists)."""
         if self.queues[chat_id]:
             self.queues[chat_id].popleft()
+
+    def snapshot(self, chat_id: int) -> list[dict]:
+        return [asdict(item) for item in self.queues[chat_id]]
+
+    def restore(self, chat_id: int, items: list[dict]) -> None:
+        self.queues[chat_id].clear()
+        for item in items:
+            self.queues[chat_id].append(Media(**item))
 
     def clear(self, chat_id: int) -> None:
         """Clear the entire queue."""
