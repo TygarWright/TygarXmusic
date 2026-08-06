@@ -79,8 +79,8 @@ async def play_hndlr(
     if not file:
         return await sent.edit_text(m.lang["play_usage"])
 
-    panel = await db.get_panel()
-    duration_limit = panel.get("duration_limit", config.DURATION_LIMIT // 60) * 60
+    settings = await db.get_settings(m.chat.id)
+    duration_limit = settings["duration_limit"] * 60
     if file.duration_sec > duration_limit:
         return await sent.edit_text(
             m.lang["play_duration_limit"].format(duration_limit // 60)
@@ -94,6 +94,7 @@ async def play_hndlr(
         queue.force_add(m.chat.id, file)
     else:
         position = queue.add(m.chat.id, file)
+        await db.save_queue(m.chat.id, queue.snapshot(m.chat.id))
 
         if position != 0 or await db.get_call(m.chat.id):
             await sent.edit_text(
@@ -124,6 +125,7 @@ async def play_hndlr(
             await sent.edit_text(m.lang["play_downloading"])
             file.file_path = await yt.download(file.id, video=video)
 
+    await db.save_queue(m.chat.id, queue.snapshot(m.chat.id))
     await anon.play_media(chat_id=m.chat.id, message=sent, media=file)
     if not tracks:
         return

@@ -41,6 +41,7 @@ class TgCall(PyTgCalls):
     async def stop(self, chat_id: int) -> None:
         client = await db.get_assistant(chat_id)
         queue.clear(chat_id)
+        await db.clear_saved_queue(chat_id)
         await db.remove_call(chat_id)
         await db.set_loop(chat_id, 0)
 
@@ -180,6 +181,7 @@ class TgCall(PyTgCalls):
             return await self.replay(chat_id)
 
         media = queue.get_next(chat_id)
+        await db.save_queue(chat_id, queue.snapshot(chat_id))
 
         if not media:
             return await self.stop(chat_id)

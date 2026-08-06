@@ -8,7 +8,7 @@ import importlib
 import signal
 from contextlib import suppress
 
-from anony import anon, app, config, db, logger, stop, thumb, userbot, yt
+from anony import anon, app, config, db, logger, queue, stop, thumb, userbot, yt
 from anony.core import health
 from anony.plugins import all_modules
 
@@ -43,6 +43,13 @@ async def main():
     app.sudoers.update(sudoers)
     app.bl_users.update(await db.get_blacklisted())
     logger.info(f"Loaded {len(app.sudoers)} sudo users.")
+    for chat_id in await db.get_chats():
+        saved = await db.load_queue(chat_id)
+        if saved:
+            queue.restore(chat_id, saved)
+            logger.info(
+                "queue_recovered", extra={"chat_id": chat_id, "items": len(saved)}
+            )
 
     await idle()
     await health.stop()

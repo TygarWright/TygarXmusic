@@ -4,11 +4,14 @@
 
 
 import asyncio
+import time
 
 from pyrogram import enums, errors, types
 
 from anony import app, config, db, logger, queue, yt
 from anony.helpers import utils
+
+_last_play: dict[tuple[int, int], float] = {}
 
 
 def checkUB(play):
@@ -52,6 +55,12 @@ def checkUB(play):
                 pass  # Don't block users if the membership check itself fails
 
         chat_id = m.chat.id
+        now = time.monotonic()
+        key = (chat_id, m.from_user.id)
+        last = _last_play.get(key, 0)
+        if now - last < config.RATE_LIMIT_SECONDS and m.from_user.id not in app.sudoers:
+            return await m.reply_text("⏳ Slow down. Try again in a moment.")
+        _last_play[key] = now
         if m.chat.type != enums.ChatType.SUPERGROUP:
             await m.reply_text(m.lang["play_chat_invalid"])
             return await app.leave_chat(chat_id)
@@ -82,7 +91,7 @@ def checkUB(play):
             if (
                 m.from_user.id not in adminlist
                 and not await db.is_auth(chat_id, m.from_user.id)
-                and not m.from_user.id in app.sudoers
+                and m.from_user.id not in app.sudoers
             ):
                 return await m.reply_text(m.lang["play_admin"])
 
